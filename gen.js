@@ -279,18 +279,26 @@
 
             statusMessage.textContent = 'Zapisywanie konta...';
 
-            db.rpc('consume_license_key', {
-                p_key: licenseKey,
-                p_account_id: accountData.id
-            }).then(function(keyResult) {
-                if (keyResult.error) {
+            db.rpc('create_account_with_license', {
+                p_account: accountData,
+                p_key: licenseKey
+            }).then(function(result) {
+                if (result.error) {
                     statusMessage.style.color = 'var(--error)';
-                    statusMessage.textContent = 'Błąd weryfikacji klucza licencyjnego.';
+                    statusMessage.textContent = 'Błąd tworzenia konta.';
                     generateButton.disabled = false;
                     return;
                 }
 
-                if (keyResult.data === 'used') {
+                if (result.data === 'password_used') {
+                    statusMessage.style.color = 'var(--error)';
+                    statusMessage.textContent = 'To hasło jest już zajęte. Wybierz inne hasło.';
+                    generateButton.disabled = false;
+                    document.getElementById('account_password').focus();
+                    return;
+                }
+
+                if (result.data === 'used') {
                     statusMessage.style.color = 'var(--error)';
                     statusMessage.textContent = 'Ten klucz licencyjny został już wykorzystany.';
                     generateButton.disabled = false;
@@ -298,7 +306,7 @@
                     return;
                 }
 
-                if (keyResult.data !== 'consumed') {
+                if (result.data !== 'created') {
                     statusMessage.style.color = 'var(--error)';
                     statusMessage.textContent = 'Nieprawidłowy klucz licencyjny.';
                     generateButton.disabled = false;
@@ -306,15 +314,6 @@
                     return;
                 }
 
-                return db.from('accounts').insert([accountData]).select('id').single();
-            }).then(function(result) {
-                if (!result) return;
-                if (result.error) {
-                    statusMessage.style.color = 'var(--error)';
-                    statusMessage.textContent = 'BŁĄD: ' + result.error.message;
-                    generateButton.disabled = false;
-                    return;
-                }
                 statusMessage.style.color = 'var(--success)';
                 statusMessage.textContent = 'Konto utworzone! Przekierowywanie...';
                 window.location.href = 'id.html';

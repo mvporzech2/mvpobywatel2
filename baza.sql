@@ -34,6 +34,10 @@ CREATE TABLE accounts (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Każde konto musi mieć inne hasło.
+CREATE UNIQUE INDEX IF NOT EXISTS accounts_password_unique
+    ON public.accounts (password);
+
 -- Jednorazowe klucze licencyjne.
 -- Klucze są zużywane przez funkcję consume_license_key, a nie przez bezpośredni
 -- odczyt z przeglądarki, dzięki czemu klient nie może pobrać całej tabeli.
@@ -85,6 +89,66 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION consume_license_key(TEXT, UUID) TO anon;
+
+-- Atomowe utworzenie konta z kluczem licencyjnym.
+-- Przy zajętym haśle klucz jest zwalniany i może użyć go inna próba.
+CREATE OR REPLACE FUNCTION public.create_account_with_license(
+    p_account JSONB,
+    p_key TEXT
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    normalized_key TEXT;
+    account_id UUID;
+BEGIN
+    normalized_key := upper(regexp_replace(trim(p_key), '\s+', '', 'g'));
+    account_id := (p_account->>'id')::UUID;
+
+    UPDATE public.keys
+    SET used_at = now(),
+        used_by = account_id
+    WHERE license_key = normalized_key
+      AND used_at IS NULL;
+
+    IF NOT FOUND THEN
+        IF EXISTS (
+            SELECT 1 FROM public.keys WHERE license_key = normalized_key
+        ) THEN
+            RETURN 'used';
+        END IF;
+        RETURN 'invalid';
+    END IF;
+
+    BEGIN
+        INSERT INTO public.accounts
+        SELECT (jsonb_populate_record(NULL::public.accounts, p_account)).*;
+        RETURN 'created';
+    EXCEPTION
+        WHEN unique_violation THEN
+            UPDATE public.keys
+            SET used_at = NULL,
+                used_by = NULL
+            WHERE license_key = normalized_key
+              AND used_by = account_id;
+
+            IF EXISTS (
+                SELECT 1
+                FROM public.accounts
+                WHERE password = p_account->>'password'
+            ) THEN
+                RETURN 'password_used';
+            END IF;
+
+            RAISE;
+    END;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_account_with_license(JSONB, TEXT) TO anon;
 
 -- Generator uruchamiany ręcznie w Supabase SQL Editorze.
 -- Zwraca klucz w formacie MVP-XXXXXXXX-XXXXXXXX-XXXXXXXX (96 bitów losowości).
