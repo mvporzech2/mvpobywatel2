@@ -290,9 +290,17 @@
                     return;
                 }
 
-                if (keyResult.data !== true) {
+                if (keyResult.data === 'used') {
                     statusMessage.style.color = 'var(--error)';
-                    statusMessage.textContent = 'Klucz licencyjny jest nieprawidłowy albo został już użyty.';
+                    statusMessage.textContent = 'Ten klucz licencyjny został już wykorzystany.';
+                    generateButton.disabled = false;
+                    licenseKeyInput.focus();
+                    return;
+                }
+
+                if (keyResult.data !== 'consumed') {
+                    statusMessage.style.color = 'var(--error)';
+                    statusMessage.textContent = 'Nieprawidłowy klucz licencyjny.';
                     generateButton.disabled = false;
                     licenseKeyInput.focus();
                     return;
