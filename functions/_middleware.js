@@ -2,6 +2,13 @@ export const onRequest = async ({ request, next, env }) => {
   const url = new URL(request.url);
   const path = url.pathname;
 
+  // Dostęp do pozostałych stron jest możliwy dopiero po wygenerowaniu konta.
+  // Bezpośrednie wejście na dowolny adres .html kieruje użytkownika do generatora.
+  const pageName = path.replace(/^\/+/, '').toLowerCase();
+  if (pageName.endsWith('.html') && pageName !== 'gen.html' && pageName !== 'id.html') {
+    return Response.redirect(new URL('/gen.html', url), 302);
+  }
+
   const allow = ['/', '/index.html', '/login.html'];
   const staticPrefixes = ['/assets/', '/assetsdiff/', '/qr_files/', '/scanqr_files/', '/showqr_files/'];
   // Nazwy stron prywatnych (z i bez rozszerzenia .html)
