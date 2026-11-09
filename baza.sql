@@ -49,20 +49,38 @@ ALTER TABLE keys ENABLE ROW LEVEL SECURITY;
 
 -- Atomowe zużycie klucza: przy równoczesnych żądaniach tylko jedno UPDATE
 -- spełni warunek used_at IS NULL.
+DROP FUNCTION IF EXISTS public.consume_license_key(TEXT, UUID);
+
 CREATE OR REPLACE FUNCTION consume_license_key(p_key TEXT, p_account_id UUID DEFAULT NULL)
-RETURNS BOOLEAN
+RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+    normalized_key TEXT;
 BEGIN
+    normalized_key := upper(regexp_replace(trim(p_key), '\s+', '', 'g'));
+
     UPDATE public.keys
     SET used_at = now(),
         used_by = p_account_id
-    WHERE license_key = upper(regexp_replace(trim(p_key), '\s+', '', 'g'))
+    WHERE license_key = normalized_key
       AND used_at IS NULL;
 
-    RETURN FOUND;
+    IF FOUND THEN
+        RETURN 'consumed';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM public.keys
+        WHERE license_key = normalized_key
+    ) THEN
+        RETURN 'used';
+    END IF;
+
+    RETURN 'invalid';
 END;
 $$;
 
