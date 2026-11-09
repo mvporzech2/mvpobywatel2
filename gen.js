@@ -36,6 +36,7 @@
     var generateButton = document.getElementById('generateButton');
     var statusMessage = document.getElementById('statusMessage');
     var statusMessageAutofill = document.getElementById('statusMessageAutofill');
+    var licenseKeyInput = document.getElementById('license_key');
     var imagePreview = document.getElementById('imagePreview');
     var imagePreviewContainer = document.getElementById('imagePreviewContainer');
     var autofillButton = document.getElementById('autofillButton');
@@ -218,6 +219,14 @@
             return;
         }
 
+        var licenseKey = licenseKeyInput.value.trim();
+        if (!licenseKey) {
+            statusMessage.style.color = 'var(--error)';
+            statusMessage.textContent = 'Wpisz klucz licencyjny!';
+            licenseKeyInput.focus();
+            return;
+        }
+
         if (imageURLInput.value === '') {
             var imageUrl = await uploadToCloudinary(fileInput.files[0]);
             if (!imageUrl) return;
@@ -252,6 +261,7 @@
             father_family_name: document.getElementById('father_family_name').value,
             mother_family_name: document.getElementById('mother_family_name').value,
             image: imageURLInput.value,
+            id: crypto.randomUUID(),
             version: 2
         };
 
@@ -269,7 +279,28 @@
 
             statusMessage.textContent = 'Zapisywanie konta...';
 
-            db.from('accounts').insert([accountData]).select('id').single().then(function(result) {
+            db.rpc('consume_license_key', {
+                p_key: licenseKey,
+                p_account_id: accountData.id
+            }).then(function(keyResult) {
+                if (keyResult.error) {
+                    statusMessage.style.color = 'var(--error)';
+                    statusMessage.textContent = 'Błąd weryfikacji klucza licencyjnego.';
+                    generateButton.disabled = false;
+                    return;
+                }
+
+                if (keyResult.data !== true) {
+                    statusMessage.style.color = 'var(--error)';
+                    statusMessage.textContent = 'Klucz licencyjny jest nieprawidłowy albo został już użyty.';
+                    generateButton.disabled = false;
+                    licenseKeyInput.focus();
+                    return;
+                }
+
+                return db.from('accounts').insert([accountData]).select('id').single();
+            }).then(function(result) {
+                if (!result) return;
                 if (result.error) {
                     statusMessage.style.color = 'var(--error)';
                     statusMessage.textContent = 'BŁĄD: ' + result.error.message;

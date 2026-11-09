@@ -3,6 +3,8 @@
 -- Wgraj ten plik w Supabase SQL Editor
 -- =============================================
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Tabela kont użytkowników
 CREATE TABLE accounts (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -31,6 +33,69 @@ CREATE TABLE accounts (
     version INTEGER DEFAULT 1,
     created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Jednorazowe klucze licencyjne.
+-- Klucze są zużywane przez funkcję consume_license_key, a nie przez bezpośredni
+-- odczyt z przeglądarki, dzięki czemu klient nie może pobrać całej tabeli.
+CREATE TABLE keys (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    license_key TEXT NOT NULL UNIQUE,
+    used_at TIMESTAMPTZ,
+    used_by UUID REFERENCES accounts(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE keys ENABLE ROW LEVEL SECURITY;
+
+-- Atomowe zużycie klucza: przy równoczesnych żądaniach tylko jedno UPDATE
+-- spełni warunek used_at IS NULL.
+CREATE OR REPLACE FUNCTION consume_license_key(p_key TEXT, p_account_id UUID DEFAULT NULL)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    UPDATE public.keys
+    SET used_at = now(),
+        used_by = p_account_id
+    WHERE license_key = upper(regexp_replace(trim(p_key), '\s+', '', 'g'))
+      AND used_at IS NULL;
+
+    RETURN FOUND;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION consume_license_key(TEXT, UUID) TO anon;
+
+-- Generator uruchamiany ręcznie w Supabase SQL Editorze.
+-- Zwraca klucz w formacie MVP-XXXXXXXX-XXXXXXXX-XXXXXXXX (96 bitów losowości).
+CREATE OR REPLACE FUNCTION generate_license_key()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    new_key TEXT;
+BEGIN
+    LOOP
+        new_key := 'MVP-' ||
+            upper(encode(gen_random_bytes(4), 'hex')) || '-' ||
+            upper(encode(gen_random_bytes(4), 'hex')) || '-' ||
+            upper(encode(gen_random_bytes(4), 'hex'));
+
+        BEGIN
+            INSERT INTO public.keys (license_key) VALUES (new_key);
+            RETURN new_key;
+        EXCEPTION WHEN unique_violation THEN
+            -- W praktyce skrajnie rzadkie; spróbuj wygenerować ponownie.
+        END;
+    END LOOP;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION generate_license_key() FROM PUBLIC, anon, authenticated;
 
 -- Włącz Row Level Security
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
