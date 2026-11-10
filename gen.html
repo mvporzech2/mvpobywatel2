@@ -605,6 +605,27 @@
             background-clip: text;
         }
 
+        .login-link {
+            display: block;
+            width: 100%;
+            margin: 0 0 24px;
+            padding: 12px 16px;
+            border: 1px solid rgba(224, 32, 32, 0.3);
+            border-radius: var(--radius-sm);
+            background: rgba(224, 32, 32, 0.06);
+            color: var(--text-secondary);
+            font: 600 0.85rem 'Inter', sans-serif;
+            text-align: center;
+            text-decoration: none;
+            transition: all var(--transition-smooth);
+        }
+
+        .login-link:hover {
+            border-color: var(--accent);
+            background: rgba(224, 32, 32, 0.12);
+            color: var(--text-primary);
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 380px) {
             .container {
@@ -627,6 +648,7 @@
 
     <div class="container">
         <h1>MVP Obywatel</h1>
+        <a class="login-link" href="id.html">Masz już konto? Zaloguj się</a>
         <details class="instruction-details">
             <summary>
                 INSTRUKCJA
