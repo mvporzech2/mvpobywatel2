@@ -26,6 +26,10 @@
             cursor: pointer;
             padding: 0;
         }
+        .appearance-option.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+        }
         .appearance-option .card-content {
             display: flex;
             align-items: center;
@@ -44,11 +48,11 @@
             justify-content: center;
             transition: background 0.2s, border-color 0.2s;
         }
-        .theme-radio:checked + .radio-custom {
+        .theme-radio:checked + .card-content .radio-custom {
             background: #3b82f6;
             border-color: #3b82f6;
         }
-        .theme-radio:checked + .radio-custom::after {
+        .theme-radio:checked + .card-content .radio-custom::after {
             content: '';
             width: 8px;
             height: 8px;
@@ -134,7 +138,6 @@
                 <label class="appearance-option card">
                     <input type="radio" name="theme" value="light" class="theme-radio">
                     <div class="card-content">
-                        <input type="radio" name="theme" value="light" class="theme-radio" style="display:none">
                         <div class="radio-custom"></div>
                         <div class="card-text" style="flex:1">
                             <div class="option-title">Tryb jasny</div>
@@ -194,14 +197,23 @@
     <script>
         // Wczytaj aktualny motyw
         const savedTheme = localStorage.getItem('theme') || 'auto';
+        const radios = document.querySelectorAll('.theme-radio');
+        const updateSelectedOption = () => {
+            document.querySelectorAll('.appearance-option').forEach(option => {
+                const optionRadio = option.querySelector('.theme-radio');
+                option.classList.toggle('selected', Boolean(optionRadio && optionRadio.checked));
+            });
+        };
         const radio = document.querySelector(`.theme-radio[value="${savedTheme}"]`);
         if (radio) radio.checked = true;
+        updateSelectedOption();
 
         // Nasłuchuj zmiany
-        document.querySelectorAll('.theme-radio').forEach(r => {
+        radios.forEach(r => {
             r.addEventListener('change', () => {
                 localStorage.setItem('theme', r.value);
                 applyTheme(r.value);
+                updateSelectedOption();
             });
         });
     </script>
