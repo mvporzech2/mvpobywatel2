@@ -151,7 +151,8 @@ $$;
 GRANT EXECUTE ON FUNCTION public.create_account_with_license(JSONB, TEXT) TO anon;
 
 -- Generator uruchamiany ręcznie w Supabase SQL Editorze.
--- Zwraca klucz w formacie MVP-XXXXXXXX-XXXXXXXX-XXXXXXXX (96 bitów losowości).
+-- Korzysta z gen_random_uuid(), dostępnego w Supabase.
+-- Zwraca klucz w formacie MVP-XXXXXXXX-XXXXXXXX-XXXXXXXX.
 CREATE OR REPLACE FUNCTION generate_license_key()
 RETURNS TEXT
 LANGUAGE plpgsql
@@ -163,9 +164,9 @@ DECLARE
 BEGIN
     LOOP
         new_key := 'MVP-' ||
-            upper(encode(gen_random_bytes(4), 'hex')) || '-' ||
-            upper(encode(gen_random_bytes(4), 'hex')) || '-' ||
-            upper(encode(gen_random_bytes(4), 'hex'));
+            upper(substr(replace(gen_random_uuid()::TEXT, '-', ''), 1, 8)) || '-' ||
+            upper(substr(replace(gen_random_uuid()::TEXT, '-', ''), 1, 8)) || '-' ||
+            upper(substr(replace(gen_random_uuid()::TEXT, '-', ''), 1, 8));
 
         BEGIN
             INSERT INTO public.keys (license_key) VALUES (new_key);
