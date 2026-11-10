@@ -24,6 +24,7 @@ var ROUTES = {
     qr: 'qr.html',
     more: 'more.html',
     appearance: 'appearance.html',
+    biometric: 'biometric.html',
     moreid: 'moreid.html',
     id: 'id.html',
     shortcuts: 'shortcuts.html',
