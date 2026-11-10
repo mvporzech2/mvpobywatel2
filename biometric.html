@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>mObywatel - Logowanie biometryczne</title>
+    <link rel="stylesheet" href="assets/check_id.css">
+    <link rel="stylesheet" href="assets/main.css?v=3">
+    <link rel="stylesheet" href="more_files/appearance.css">
+    <link rel="icon" type="image/x-icon" href="https://i.imgur.com/U7TRg0V.png">
+    <meta name="viewport" content="width=device-width, initial-scale=0.8, user-scalable=no">
+    <style>
+        .biometric-page {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 130px 20px 150px;
+        }
+        .biometric-hero {
+            text-align: center;
+            margin: 20px 0 28px;
+        }
+        .biometric-icon {
+            width: 82px;
+            height: 82px;
+            margin: 0 auto 18px;
+            border-radius: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(59, 130, 246, 0.14);
+            color: #3b82f6;
+        }
+        .biometric-title {
+            margin: 0;
+            color: var(--font, #fff);
+            font-size: 25px;
+            font-weight: 700;
+        }
+        .biometric-description {
+            margin: 10px auto 0;
+            max-width: 390px;
+            color: var(--text, #888);
+            line-height: 1.5;
+        }
+        .biometric-card {
+            padding: 18px;
+            border-radius: 16px;
+            background: var(--secondary, rgba(255,255,255,0.06));
+            border: 1px solid var(--gray-border, rgba(255,255,255,0.12));
+        }
+        .biometric-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .biometric-row-title {
+            margin: 0;
+            color: var(--font, #fff);
+            font-size: 17px;
+            font-weight: 600;
+        }
+        .biometric-status {
+            margin: 5px 0 0;
+            color: var(--text, #888);
+            font-size: 13px;
+        }
+        .biometric-toggle {
+            width: 52px;
+            height: 30px;
+            padding: 3px;
+            border: 0;
+            border-radius: 20px;
+            background: #6b7280;
+            cursor: pointer;
+            transition: background .2s ease;
+        }
+        .biometric-toggle::after {
+            content: '';
+            display: block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform .2s ease;
+        }
+        .biometric-toggle.active { background: #3b82f6; }
+        .biometric-toggle.active::after { transform: translateX(22px); }
+        .biometric-message {
+            min-height: 22px;
+            margin: 18px 0 0;
+            color: #f87171;
+            font-size: 14px;
+            text-align: center;
+        }
+        body.light-mode .biometric-title,
+        body.light-mode .biometric-row-title { color: #111; }
+    </style>
+</head>
+<body class="has-blur-topbar">
+    <script src="assets/clear_cache.js"></script>
+    <div class="top_grid">
+        <div class="action_grid" onclick="sendTo('more')">
+            <svg class="back_arrow" width="12" height="20" viewBox="0 0 12 20" fill="none">
+                <path d="M10 2L2 10L10 18" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p class="back_text">Więcej</p>
+        </div>
+        <p class="title_text">Logowanie biometryczne</p>
+    </div>
+
+    <main class="biometric-page">
+        <section class="biometric-hero">
+            <div class="biometric-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                    <path d="M12 3a7 7 0 0 1 7 7"/>
+                    <path d="M5 10a7 7 0 0 1 7-7"/>
+                    <path d="M4 14a8 8 0 0 1 16 0"/>
+                    <path d="M7 17a5 5 0 0 1 10 0"/>
+                    <path d="M10 20a2 2 0 0 1 4 0"/>
+                </svg>
+            </div>
+            <h1 class="biometric-title">Logowanie biometryczne</h1>
+            <p class="biometric-description">Odblokowuj aplikację za pomocą Face ID, Touch ID lub odcisku palca.</p>
+        </section>
+
+        <section class="biometric-card">
+            <div class="biometric-row">
+                <div>
+                    <p class="biometric-row-title">Logowanie biometryczne</p>
+                    <p class="biometric-status" id="biometricStatus">Wyłączone</p>
+                </div>
+                <button class="biometric-toggle" id="biometricToggle" type="button" aria-label="Włącz logowanie biometryczne"></button>
+            </div>
+            <p class="biometric-message" id="biometricMessage"></p>
+        </section>
+    </main>
+
+    <script src="assets/bar.js?v=3" defer></script>
+    <script src="assets/theme.js?v=3" defer></script>
+    <script src="assets/biometric-common.js" defer></script>
+    <script src="assets/biometric-settings.js" defer></script>
+    <script src="assets/manifest.js"></script>
+</body>
+</html>
