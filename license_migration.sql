@@ -102,3 +102,6 @@ REVOKE ALL ON FUNCTION public.generate_license_key() FROM PUBLIC, anon, authenti
 
 -- Sprawdzenie po migracji:
 -- SELECT public.generate_license_key();
+
+-- Odśwież cache funkcji RPC używany przez Supabase Data API.
+NOTIFY pgrst, 'reload schema';
