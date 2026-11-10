@@ -332,7 +332,8 @@
             }).then(function(result) {
                 if (result.error) {
                     statusMessage.style.color = 'var(--error)';
-                    statusMessage.textContent = 'Błąd tworzenia konta.';
+                    console.error('Błąd RPC create_account_with_license:', result.error);
+                    statusMessage.textContent = 'Błąd bazy danych: ' + result.error.message;
                     generateButton.disabled = false;
                     return;
                 }
