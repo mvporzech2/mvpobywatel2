@@ -108,13 +108,13 @@ BEGIN
     normalized_key := upper(regexp_replace(trim(p_key), '\s+', '', 'g'));
     account_id := (p_account->>'id')::UUID;
 
-    UPDATE public.keys
-    SET used_at = now(),
-        used_by = account_id
-    WHERE license_key = normalized_key
-      AND used_at IS NULL;
-
-    IF NOT FOUND THEN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.keys
+        WHERE license_key = normalized_key
+          AND used_at IS NULL
+        FOR UPDATE
+    ) THEN
         IF EXISTS (
             SELECT 1 FROM public.keys WHERE license_key = normalized_key
         ) THEN
@@ -126,6 +126,13 @@ BEGIN
     BEGIN
         INSERT INTO public.accounts
         SELECT (jsonb_populate_record(NULL::public.accounts, p_account)).*;
+
+        UPDATE public.keys
+        SET used_at = now(),
+            used_by = account_id
+        WHERE license_key = normalized_key
+          AND used_at IS NULL;
+
         RETURN 'created';
     EXCEPTION
         WHEN unique_violation THEN
