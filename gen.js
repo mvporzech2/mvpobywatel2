@@ -46,6 +46,53 @@
     var homeDateInput = document.getElementById('home_date');
     var birthdayInput = document.getElementById('birthday');
     var manualDateFields = [issueDateInput, expiryDateInput, homeDateInput];
+    var sessionFields = [
+        'name', 'surname', 'sex', 'birthday', 'pesel', 'mdow_series',
+        'issue_date', 'expiry_date', 'father_name', 'mother_name',
+        'nationality', 'birth_place', 'birth_country', 'adress1', 'adress2',
+        'city', 'home_date', 'family_name', 'father_family_name',
+        'mother_family_name', 'image'
+    ];
+
+    function redirectToAccount(account) {
+        var nameMap = {
+            family_name: 'familyName',
+            father_family_name: 'fathersFamilyName',
+            mother_family_name: 'mothersFamilyName',
+            birth_country: 'countryOfBirth',
+            birth_place: 'birthPlace'
+        };
+        var params = [];
+        sessionFields.forEach(function(field) {
+            var value = account[field] || '';
+            params.push(encodeURIComponent(nameMap[field] || field) + '=' + encodeURIComponent(value));
+        });
+        window.location.href = 'home.html?' + params.join('&');
+    }
+
+    function restoreLoggedInAccount() {
+        var savedPassword = localStorage.getItem('user_password');
+        if (!savedPassword) return;
+
+        ensureSupabase(function(db) {
+            if (!db) return;
+            db.from('accounts').select('*').eq('password', savedPassword).maybeSingle().then(function(result) {
+                if (result.error) {
+                    console.error('Nie można zweryfikować zapisanej sesji:', result.error);
+                    return;
+                }
+                if (result.data) {
+                    redirectToAccount(result.data);
+                } else {
+                    localStorage.removeItem('user_password');
+                }
+            }).catch(function(error) {
+                console.error('Nie można zweryfikować zapisanej sesji:', error);
+            });
+        });
+    }
+
+    restoreLoggedInAccount();
 
     function formatDateForDisplay(date) {
         if (!(date instanceof Date) || isNaN(date)) return '';
